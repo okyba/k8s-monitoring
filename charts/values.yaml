@@ -9,7 +9,7 @@ spam_app:
 # Dependencies #
 
 # VM cluster #
-victoriaMetrics:
+victoria-metrics-cluster:
   vminsert:
     replicaCount: 1
     podAnnotations:
@@ -27,10 +27,11 @@ victoriaMetrics:
       prometheus.io/port: "8481"  
 
 # VM Agent #
-vmagent:
+victoria-metrics-agent:
+  # remoteWritePreffix: "victoria-metrics-cluster-vminsert.default"
+  # remoteWritePostfix: ".svc.cluster.local:8480/insert/0/prometheus"
   remoteWrite:
-  - url: http://vmcluster-victoria-metrics-cluster-vminsert.default.svc.cluster.local:8480/insert/0/prometheus/
-
+    - url: "http://monitoring-k8s-victoria-metrics-cluster-vminsert.default.svc.cluster.local:8480/insert/0/prometheus"
   config:
     global:
       scrape_interval: 10s
@@ -247,6 +248,7 @@ vmagent:
           - source_labels: [__meta_kubernetes_service_name]
             target_label: kubernetes_name
       - job_name: "kubernetes-pods"
+        max_scrape_size: 67108864
         kubernetes_sd_configs:
           - role: pod
         relabel_configs:
@@ -277,8 +279,11 @@ vmagent:
             action: replace
             target_label: kubernetes_pod_name
 
+
 # Grafana #
 grafana:
+  adminUser: "admin"
+  adminPassword: "admin"
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -286,7 +291,7 @@ grafana:
         - name: victoriametrics
           type: prometheus
           orgId: 1
-          url: http://vmcluster-victoria-metrics-cluster-vmselect.default.svc.cluster.local:8481/select/0/prometheus/
+          url: http://monitoring-k8s-victoria-metrics-cluster-vmselect.default.svc.cluster.local:8481/select/0/prometheus/
           access: proxy
           isDefault: true
           updateIntervalSeconds: 10
@@ -305,6 +310,10 @@ grafana:
        options:
          path: /var/lib/grafana/dashboards/default
 
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
   dashboards:
     default:
       victoriametrics:
@@ -319,238 +328,3 @@ grafana:
         gnetId: 14205
         revision: 1
         datasource: victoriametrics
-    spam-app-dashboard:
-      json: >
-        {
-          "annotations": {
-            "list": [
-              {
-                "builtIn": 1,
-                "datasource": {
-                  "type": "grafana",
-                  "uid": "-- Grafana --"
-                },
-                "enable": true,
-                "hide": true,
-                "iconColor": "rgba(0, 211, 255, 1)",
-                "name": "Annotations & Alerts",
-                "type": "dashboard"
-              }
-            ]
-          },
-          "editable": true,
-          "fiscalYearStartMonth": 0,
-          "graphTooltip": 0,
-          "id": 5,
-          "links": [],
-          "panels": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "PABDA7AB1AD2A1489"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "custom": {
-                    "axisBorderShow": false,
-                    "axisCenteredZero": false,
-                    "axisColorMode": "text",
-                    "axisLabel": "",
-                    "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "barWidthFactor": 0.6,
-                    "drawStyle": "line",
-                    "fillOpacity": 0,
-                    "gradientMode": "none",
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    },
-                    "insertNulls": false,
-                    "lineInterpolation": "linear",
-                    "lineWidth": 1,
-                    "pointSize": 5,
-                    "scaleDistribution": {
-                      "type": "linear"
-                    },
-                    "showPoints": "auto",
-                    "spanNulls": false,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
-                    },
-                    "thresholdsStyle": {
-                      "mode": "off"
-                    }
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 0,
-                "y": 0
-              },
-              "id": 1,
-              "options": {
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "tooltip": {
-                  "mode": "single",
-                  "sort": "none"
-                }
-              },
-              "pluginVersion": "11.3.0",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus",
-                    "uid": "PABDA7AB1AD2A1489"
-                  },
-                  "editorMode": "code",
-                  "expr": "sum(random_gauge_1) by (country)",
-                  "legendFormat": "{{country}}",
-                  "range": true,
-                  "refId": "A"
-                }
-              ],
-              "title": "Active Entities by Country",
-              "type": "timeseries"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "PABDA7AB1AD2A1489"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "custom": {
-                    "axisBorderShow": false,
-                    "axisCenteredZero": false,
-                    "axisColorMode": "text",
-                    "axisLabel": "",
-                    "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "barWidthFactor": 0.6,
-                    "drawStyle": "line",
-                    "fillOpacity": 0,
-                    "gradientMode": "none",
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    },
-                    "insertNulls": false,
-                    "lineInterpolation": "linear",
-                    "lineWidth": 1,
-                    "pointSize": 5,
-                    "scaleDistribution": {
-                      "type": "linear"
-                    },
-                    "showPoints": "auto",
-                    "spanNulls": false,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
-                    },
-                    "thresholdsStyle": {
-                      "mode": "off"
-                    }
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 0
-              },
-              "id": 2,
-              "options": {
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "tooltip": {
-                  "mode": "single",
-                  "sort": "none"
-                }
-              },
-              "pluginVersion": "11.3.0",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus",
-                    "uid": "PABDA7AB1AD2A1489"
-                  },
-                  "expr": "sum(random_gauge_1) by (platform)",
-                  "legendFormat": "{{platform}}",
-                  "refId": "A"
-                }
-              ],
-              "title": "Active Entities by Platform",
-              "type": "timeseries"
-            }
-          ],
-          "preload": false,
-          "schemaVersion": 40,
-          "tags": [],
-          "templating": {
-            "list": []
-          },
-          "time": {
-            "from": "now-1h",
-            "to": "now"
-          },
-          "timepicker": {},
-          "timezone": "",
-          "title": "Spam2000 Gauge Metrics",
-          "uid": "random-gauge-dashboard",
-          "version": 2,
-          "weekStart": ""
-        }
-                
-                
